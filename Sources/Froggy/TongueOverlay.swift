@@ -81,27 +81,67 @@ private final class TongueCanvas: NSView {
     override var isFlipped: Bool { false }
 
     override func draw(_ dirtyRect: NSRect) {
-        guard start != .zero || end != .zero else { return }
+        let dx = end.x - start.x
+        let dy = end.y - start.y
+        let length = hypot(dx, dy)
+        guard length > 1 else { return }
+
+        let ux = dx / length
+        let uy = dy / length
+        let px = -uy
+        let py = ux
+        let stretch = min(length / 320, 1)
+        let baseWidth: CGFloat = 8.5
+        let tipWidth = max(3.5, baseWidth - stretch * 4.5)
+
+        func shifted(_ origin: NSPoint, along: CGFloat, side: CGFloat) -> NSPoint {
+            NSPoint(x: origin.x + ux * along + px * side, y: origin.y + uy * along + py * side)
+        }
+
+        let body = tongueShape(
+            from: start,
+            to: end,
+            baseWidth: baseWidth,
+            tipWidth: tipWidth,
+            shifted: shifted
+        )
+        NSColor(srgbRed: 0.84, green: 0.18, blue: 0.32, alpha: 0.96).setFill()
+        body.fill()
+
+        let sheen = tongueShape(
+            from: shifted(start, along: length * 0.04, side: baseWidth * 0.08),
+            to: shifted(end, along: -tipWidth * 0.35, side: tipWidth * 0.06),
+            baseWidth: baseWidth * 0.34,
+            tipWidth: tipWidth * 0.28,
+            shifted: shifted
+        )
+        NSColor(srgbRed: 1, green: 0.62, blue: 0.70, alpha: 0.85).setFill()
+        sheen.fill()
+    }
+
+    private func tongueShape(
+        from start: NSPoint,
+        to end: NSPoint,
+        baseWidth: CGFloat,
+        tipWidth: CGFloat,
+        shifted: (NSPoint, CGFloat, CGFloat) -> NSPoint
+    ) -> NSBezierPath {
         let path = NSBezierPath()
-        path.move(to: start)
-        let midpoint = NSPoint(x: (start.x + end.x) / 2, y: (start.y + end.y) / 2)
-        let length = max(hypot(end.x - start.x, end.y - start.y), 1)
-        let sag = min(70, length * 0.22)
-        let control = NSPoint(x: midpoint.x, y: midpoint.y - sag)
-        path.curve(to: end, controlPoint1: control, controlPoint2: control)
-        path.lineCapStyle = .round
-
-        NSColor(srgbRed: 0.55, green: 0.08, blue: 0.16, alpha: 0.35).setStroke()
-        path.lineWidth = 11
-        path.stroke()
-
-        NSColor(srgbRed: 0.96, green: 0.38, blue: 0.48, alpha: 0.96).setStroke()
-        path.lineWidth = 7
-        path.stroke()
-
-        NSColor(srgbRed: 1, green: 0.78, blue: 0.82, alpha: 0.7).setStroke()
-        path.lineWidth = 1.6
-        path.stroke()
+        path.move(to: shifted(start, 0, baseWidth / 2))
+        path.line(to: shifted(end, 0, tipWidth / 2))
+        path.curve(
+            to: shifted(end, 0, -tipWidth / 2),
+            controlPoint1: shifted(end, tipWidth * 0.9, tipWidth / 2),
+            controlPoint2: shifted(end, tipWidth * 0.9, -tipWidth / 2)
+        )
+        path.line(to: shifted(start, 0, -baseWidth / 2))
+        path.curve(
+            to: shifted(start, 0, baseWidth / 2),
+            controlPoint1: shifted(start, -baseWidth * 0.12, -baseWidth / 2),
+            controlPoint2: shifted(start, -baseWidth * 0.12, baseWidth / 2)
+        )
+        path.close()
+        return path
     }
 }
 

@@ -224,8 +224,9 @@ final class StatusBarController: NSObject {
     }
 
     private func mouthPoint() -> NSPoint {
-        let rect = frogWindow.frame
-        return NSPoint(x: rect.midX, y: rect.minY + 4)
+        let local = FrogIcon.mouthPoint(in: frogView.bounds)
+        let inWindow = frogView.convert(local, to: nil)
+        return frogWindow.convertToScreen(NSRect(origin: inWindow, size: .zero)).origin
     }
 
     private func screenForFrog() -> NSScreen {
@@ -342,53 +343,74 @@ private final class FrogFaceView: NSView {
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        FrogIcon.draw(mouthOpen: mouthOpen, in: bounds.insetBy(dx: 1, dy: 1))
+        FrogIcon.draw(mouthOpen: mouthOpen, in: bounds)
     }
 }
 
 private enum FrogIcon {
+    /// Bottom lip of the open mouth, in the 22-point design space.
+    private static let mouthDesign = NSPoint(x: 11, y: 2.7)
+
+    static func mouthPoint(in bounds: NSRect) -> NSPoint {
+        let scaleX = bounds.width / 22
+        let scaleY = bounds.height / 22
+        return NSPoint(
+            x: bounds.minX + mouthDesign.x * scaleX,
+            y: bounds.minY + mouthDesign.y * scaleY
+        )
+    }
+
     static func draw(mouthOpen: Bool, in rect: NSRect) {
-        NSGraphicsContext.current?.saveGraphicsState()
-        let scale = min(rect.width, rect.height) / 18
+        guard let context = NSGraphicsContext.current else { return }
+        context.saveGraphicsState()
         let transform = NSAffineTransform()
         transform.translateX(by: rect.minX, yBy: rect.minY)
-        transform.scale(by: scale)
+        transform.scaleX(by: rect.width / 22, yBy: rect.height / 22)
         transform.concat()
 
-        NSColor(calibratedWhite: 1, alpha: 0.92).setFill()
-        NSBezierPath(ovalIn: NSRect(x: 0.4, y: 0.2, width: 17.2, height: 17.2)).fill()
+        let green = NSColor(srgbRed: 0.29, green: 0.78, blue: 0.34, alpha: 1)
+        let belly = NSColor(srgbRed: 0.72, green: 0.92, blue: 0.46, alpha: 1)
+        let lid = NSColor(srgbRed: 0.18, green: 0.55, blue: 0.24, alpha: 1)
 
-        NSColor(srgbRed: 0.22, green: 0.72, blue: 0.28, alpha: 1).setFill()
-        NSBezierPath(ovalIn: NSRect(x: 2, y: 1.2, width: 14, height: 12.2)).fill()
+        green.setFill()
+        NSBezierPath(ovalIn: NSRect(x: 2.4, y: 0.4, width: 17.2, height: 14.6)).fill()
+        belly.setFill()
+        NSBezierPath(ovalIn: NSRect(x: 6.4, y: 1.0, width: 9.2, height: 7.4)).fill()
 
-        NSColor(srgbRed: 0.12, green: 0.42, blue: 0.16, alpha: 1).setFill()
-        NSBezierPath(ovalIn: NSRect(x: 1.2, y: 8.4, width: 6.4, height: 5.2)).fill()
-        NSBezierPath(ovalIn: NSRect(x: 10.4, y: 8.4, width: 6.4, height: 5.2)).fill()
-
+        lid.setFill()
+        NSBezierPath(ovalIn: NSRect(x: 1.5, y: 11.0, width: 9.0, height: 9.0)).fill()
+        NSBezierPath(ovalIn: NSRect(x: 11.5, y: 11.0, width: 9.0, height: 9.0)).fill()
         NSColor.white.setFill()
-        NSBezierPath(ovalIn: NSRect(x: 2.3, y: 9.2, width: 4.3, height: 4.3)).fill()
-        NSBezierPath(ovalIn: NSRect(x: 11.4, y: 9.2, width: 4.3, height: 4.3)).fill()
+        NSBezierPath(ovalIn: NSRect(x: 2.5, y: 12.0, width: 7.2, height: 7.2)).fill()
+        NSBezierPath(ovalIn: NSRect(x: 12.3, y: 12.0, width: 7.2, height: 7.2)).fill()
+        NSColor(srgbRed: 0.1, green: 0.12, blue: 0.1, alpha: 1).setFill()
+        NSBezierPath(ovalIn: NSRect(x: 4.7, y: 13.2, width: 3.3, height: 3.3)).fill()
+        NSBezierPath(ovalIn: NSRect(x: 13.8, y: 13.2, width: 3.3, height: 3.3)).fill()
+        NSColor.white.setFill()
+        NSBezierPath(ovalIn: NSRect(x: 5.0, y: 15.2, width: 1.15, height: 1.15)).fill()
+        NSBezierPath(ovalIn: NSRect(x: 14.1, y: 15.2, width: 1.15, height: 1.15)).fill()
 
-        NSColor.black.setFill()
-        NSBezierPath(ovalIn: NSRect(x: 4.0, y: 10.0, width: 1.8, height: 1.8)).fill()
-        NSBezierPath(ovalIn: NSRect(x: 13.1, y: 10.0, width: 1.8, height: 1.8)).fill()
+        lid.setFill()
+        NSBezierPath(ovalIn: NSRect(x: 8.3, y: 8.6, width: 1.5, height: 1.1)).fill()
+        NSBezierPath(ovalIn: NSRect(x: 12.2, y: 8.6, width: 1.5, height: 1.1)).fill()
 
         if mouthOpen {
-            NSColor(srgbRed: 0.93, green: 0.28, blue: 0.38, alpha: 1).setFill()
-            NSBezierPath(ovalIn: NSRect(x: 6.3, y: 3.0, width: 5.4, height: 3.2)).fill()
+            NSColor(srgbRed: 0.55, green: 0.08, blue: 0.16, alpha: 1).setFill()
+            NSBezierPath(ovalIn: NSRect(x: 6.6, y: 2.7, width: 8.8, height: 4.6)).fill()
         } else {
             let smile = NSBezierPath()
-            smile.lineWidth = 0.9
+            smile.lineWidth = 1.15
             smile.lineCapStyle = .round
-            NSColor(srgbRed: 0.12, green: 0.36, blue: 0.16, alpha: 1).setStroke()
-            smile.move(to: NSPoint(x: 6.4, y: 4.8))
+            lid.setStroke()
+            smile.move(to: NSPoint(x: 7.2, y: 5.5))
             smile.curve(
-                to: NSPoint(x: 11.6, y: 4.8),
-                controlPoint1: NSPoint(x: 8.0, y: 2.7),
-                controlPoint2: NSPoint(x: 10.0, y: 2.7)
+                to: NSPoint(x: 14.8, y: 5.5),
+                controlPoint1: NSPoint(x: 9.0, y: 3.1),
+                controlPoint2: NSPoint(x: 13.0, y: 3.1)
             )
             smile.stroke()
         }
-        NSGraphicsContext.current?.restoreGraphicsState()
+
+        context.restoreGraphicsState()
     }
 }
