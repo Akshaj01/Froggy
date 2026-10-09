@@ -349,7 +349,7 @@ private final class FrogFaceView: NSView {
 
 private enum FrogIcon {
     /// Bottom lip of the open mouth, in the 22-point design space.
-    private static let mouthDesign = NSPoint(x: 11, y: 2.7)
+    private static let mouthDesign = NSPoint(x: 11, y: 3.0)
 
     static func mouthPoint(in bounds: NSRect) -> NSPoint {
         let scaleX = bounds.width / 22
@@ -368,45 +368,48 @@ private enum FrogIcon {
         transform.scaleX(by: rect.width / 22, yBy: rect.height / 22)
         transform.concat()
 
-        let green = NSColor(srgbRed: 0.29, green: 0.78, blue: 0.34, alpha: 1)
-        let belly = NSColor(srgbRed: 0.72, green: 0.92, blue: 0.46, alpha: 1)
-        let lid = NSColor(srgbRed: 0.18, green: 0.55, blue: 0.24, alpha: 1)
+        let green = NSColor(srgbRed: 0.45, green: 0.86, blue: 0.48, alpha: 1)
+        let outline = NSColor(srgbRed: 0.16, green: 0.45, blue: 0.28, alpha: 1)
+        let belly = NSColor(srgbRed: 0.86, green: 0.97, blue: 0.62, alpha: 1)
+        let blush = NSColor(srgbRed: 1, green: 0.55, blue: 0.66, alpha: 0.85)
 
+        outline.setFill()
+        NSBezierPath(ovalIn: NSRect(x: 2.6, y: 0.6, width: 16.8, height: 14.4)).fill()
         green.setFill()
-        NSBezierPath(ovalIn: NSRect(x: 2.4, y: 0.4, width: 17.2, height: 14.6)).fill()
+        NSBezierPath(ovalIn: NSRect(x: 3.5, y: 1.5, width: 15.0, height: 12.6)).fill()
         belly.setFill()
-        NSBezierPath(ovalIn: NSRect(x: 6.4, y: 1.0, width: 9.2, height: 7.4)).fill()
+        NSBezierPath(ovalIn: NSRect(x: 7.6, y: 2.2, width: 6.8, height: 5.2)).fill()
+        blush.setFill()
+        NSBezierPath(ovalIn: NSRect(x: 4.0, y: 5.6, width: 3.1, height: 1.8)).fill()
+        NSBezierPath(ovalIn: NSRect(x: 14.9, y: 5.6, width: 3.1, height: 1.8)).fill()
 
-        lid.setFill()
-        NSBezierPath(ovalIn: NSRect(x: 1.5, y: 11.0, width: 9.0, height: 9.0)).fill()
-        NSBezierPath(ovalIn: NSRect(x: 11.5, y: 11.0, width: 9.0, height: 9.0)).fill()
-        NSColor.white.setFill()
-        NSBezierPath(ovalIn: NSRect(x: 2.5, y: 12.0, width: 7.2, height: 7.2)).fill()
-        NSBezierPath(ovalIn: NSRect(x: 12.3, y: 12.0, width: 7.2, height: 7.2)).fill()
-        NSColor(srgbRed: 0.1, green: 0.12, blue: 0.1, alpha: 1).setFill()
-        NSBezierPath(ovalIn: NSRect(x: 4.7, y: 13.2, width: 3.3, height: 3.3)).fill()
-        NSBezierPath(ovalIn: NSRect(x: 13.8, y: 13.2, width: 3.3, height: 3.3)).fill()
-        NSColor.white.setFill()
-        NSBezierPath(ovalIn: NSRect(x: 5.0, y: 15.2, width: 1.15, height: 1.15)).fill()
-        NSBezierPath(ovalIn: NSRect(x: 14.1, y: 15.2, width: 1.15, height: 1.15)).fill()
-
-        lid.setFill()
-        NSBezierPath(ovalIn: NSRect(x: 8.3, y: 8.6, width: 1.5, height: 1.1)).fill()
-        NSBezierPath(ovalIn: NSRect(x: 12.2, y: 8.6, width: 1.5, height: 1.1)).fill()
+        func eye(at x: CGFloat) {
+            outline.setFill()
+            NSBezierPath(ovalIn: NSRect(x: x, y: 10.6, width: 8.4, height: 9.0)).fill()
+            NSColor.white.setFill()
+            NSBezierPath(ovalIn: NSRect(x: x + 0.7, y: 11.3, width: 7.0, height: 7.6)).fill()
+            NSColor(srgbRed: 0.12, green: 0.16, blue: 0.18, alpha: 1).setFill()
+            NSBezierPath(ovalIn: NSRect(x: x + 2.15, y: 12.5, width: 3.7, height: 4.3)).fill()
+            NSColor.white.setFill()
+            NSBezierPath(ovalIn: NSRect(x: x + 2.45, y: 15.0, width: 1.7, height: 1.7)).fill()
+            NSBezierPath(ovalIn: NSRect(x: x + 4.35, y: 13.3, width: 0.75, height: 0.75)).fill()
+        }
+        eye(at: 1.7)
+        eye(at: 11.9)
 
         if mouthOpen {
-            NSColor(srgbRed: 0.55, green: 0.08, blue: 0.16, alpha: 1).setFill()
-            NSBezierPath(ovalIn: NSRect(x: 6.6, y: 2.7, width: 8.8, height: 4.6)).fill()
+            NSColor(srgbRed: 0.72, green: 0.16, blue: 0.32, alpha: 1).setFill()
+            NSBezierPath(ovalIn: NSRect(x: 7.4, y: 3.0, width: 7.2, height: 3.5)).fill()
         } else {
             let smile = NSBezierPath()
-            smile.lineWidth = 1.15
+            smile.lineWidth = 1.05
             smile.lineCapStyle = .round
-            lid.setStroke()
-            smile.move(to: NSPoint(x: 7.2, y: 5.5))
+            outline.setStroke()
+            smile.move(to: NSPoint(x: 8.7, y: 5.15))
             smile.curve(
-                to: NSPoint(x: 14.8, y: 5.5),
-                controlPoint1: NSPoint(x: 9.0, y: 3.1),
-                controlPoint2: NSPoint(x: 13.0, y: 3.1)
+                to: NSPoint(x: 13.3, y: 5.15),
+                controlPoint1: NSPoint(x: 9.8, y: 3.85),
+                controlPoint2: NSPoint(x: 12.2, y: 3.85)
             )
             smile.stroke()
         }
