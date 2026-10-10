@@ -139,6 +139,20 @@ final class StatusBarController: NSObject {
         open.isEnabled = true
         menu.addItem(open)
 
+        if let last = SaveLocation.lastFile {
+            menu.addItem(.separator())
+
+            let recent = NSMenuItem(title: last.lastPathComponent, action: #selector(showLastFile(_:)), keyEquivalent: "")
+            recent.target = self
+            recent.isEnabled = true
+            menu.addItem(recent)
+
+            let undo = NSMenuItem(title: "Undo Last Save", action: #selector(undoLastSave(_:)), keyEquivalent: "z")
+            undo.target = self
+            undo.isEnabled = true
+            menu.addItem(undo)
+        }
+
         menu.addItem(.separator())
 
         let quit = NSMenuItem(title: "Quit Froggy", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -178,6 +192,20 @@ final class StatusBarController: NSObject {
         NSWorkspace.shared.open(SaveLocation.folder)
     }
 
+    @objc private func showLastFile(_ sender: Any?) {
+        guard let url = SaveLocation.lastFile else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([url])
+    }
+
+    @objc private func undoLastSave(_ sender: Any?) {
+        do {
+            let name = try SaveLocation.moveLastFileToTrash()
+            hud.show("Moved \(name) to Trash", near: mouthPoint())
+        } catch {
+            hud.show(error.localizedDescription, near: mouthPoint())
+        }
+    }
+
     private func grabFile(at point: NSPoint) {
         guard FileResolver.accessGranted(prompt: true) else {
             hud.show("Allow Froggy in System Settings → Privacy & Security → Accessibility.", near: point)
@@ -190,6 +218,7 @@ final class StatusBarController: NSObject {
         }
         do {
             let saved = try PdfConverter.makePDF(from: file, in: SaveLocation.folder)
+            SaveLocation.remember(saved)
             hud.show("Saved \(saved.lastPathComponent)", near: point)
         } catch {
             hud.show(error.localizedDescription, near: point)
@@ -209,6 +238,7 @@ final class StatusBarController: NSObject {
         screenshotTask = Task { [weak self] in
             do {
                 try await ScreenCapture.savePNG(displayID: displayID, scale: scale, to: destination)
+                SaveLocation.remember(destination)
                 self?.hud.show("Saved \(destination.lastPathComponent)", near: self?.mouthPoint() ?? .zero)
             } catch {
                 self?.hud.show(error.localizedDescription, near: self?.mouthPoint() ?? .zero)

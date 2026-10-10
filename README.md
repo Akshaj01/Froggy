@@ -8,7 +8,7 @@ The frog sits at the top of the screen, just to the right of the camera notch.
 
 - **Drag** from the frog onto a file in Finder or on the Desktop. The tongue stretches in a straight line to the cursor. Let go and Froggy saves a PDF.
 - **Double-click** the frog to save a PNG screenshot of that display.
-- **Click once** to open the menu: see the current folder, change it, open it, or quit.
+- **Click once** to open the menu. It shows the save folder, the last file Froggy made, Undo Last Save, and Quit. Undo moves that file to the Trash. Clicking the file name shows it in Finder.
 
 New files go to `~/Documents/Froggy` until you pick another folder. That choice is remembered.
 

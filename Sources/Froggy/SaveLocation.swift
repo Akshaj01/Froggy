@@ -5,6 +5,7 @@ enum SaveLocation {
     static var defaults: UserDefaults = .standard
 
     private static let key = "saveFolderPath"
+    private static let lastFileKey = "lastSavedFilePath"
 
     static var folder: URL {
         if let path = defaults.string(forKey: key) {
@@ -36,6 +37,40 @@ enum SaveLocation {
             return "~/" + path.dropFirst(home.count + 1)
         }
         return path
+    }
+
+    static var lastFile: URL? {
+        guard let path = defaults.string(forKey: lastFileKey) else { return nil }
+        let url = URL(fileURLWithPath: path)
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory), !isDirectory.boolValue else {
+            return nil
+        }
+        return url
+    }
+
+    static func remember(_ url: URL) {
+        defaults.set(url.path, forKey: lastFileKey)
+    }
+
+    static func moveLastFileToTrash() throws -> String {
+        guard let url = lastFile else {
+            throw TrashError.nothingToUndo
+        }
+        try FileManager.default.trashItem(at: url, resultingItemURL: nil)
+        defaults.removeObject(forKey: lastFileKey)
+        return url.lastPathComponent
+    }
+
+    enum TrashError: LocalizedError {
+        case nothingToUndo
+
+        var errorDescription: String? {
+            switch self {
+            case .nothingToUndo:
+                "Nothing to undo."
+            }
+        }
     }
 
     static func uniqueDestination(in folder: URL, baseName: String, pathExtension: String) -> URL {

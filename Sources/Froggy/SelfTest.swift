@@ -141,6 +141,29 @@ enum FroggySelfTest {
             titles.joined(separator: " | ")
         )
 
+        let recent = output.appendingPathComponent("latest.pdf")
+        FileManager.default.createFile(atPath: recent.path, contents: Data("%PDF".utf8))
+        SaveLocation.remember(recent)
+        let recentTitles = controller.makeMenu().items.map(\.title).filter { !$0.isEmpty }
+        check(
+            "menu shows the last file above undo",
+            recentTitles == [
+                "Save to: \(SaveLocation.displayPath)",
+                "Change Save Folder…",
+                "Open Save Folder",
+                "latest.pdf",
+                "Undo Last Save",
+                "Quit Froggy",
+            ],
+            recentTitles.joined(separator: " | ")
+        )
+        do {
+            let trashed = try SaveLocation.moveLastFileToTrash()
+            check("undo moves the last file to trash", trashed == "latest.pdf" && SaveLocation.lastFile == nil && !FileManager.default.fileExists(atPath: recent.path))
+        } catch {
+            check("undo moves the last file to trash", false, error.localizedDescription)
+        }
+
         print(failed ? "SELF-TEST FAILED" : "SELF-TEST PASSED")
         return failed ? 1 : 0
     }
