@@ -18,9 +18,9 @@ enum FroggyMain {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private var statusBar: StatusBarController?
+    private var frog: FrogController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        statusBar = StatusBarController()
+        frog = FrogController()
     }
 }

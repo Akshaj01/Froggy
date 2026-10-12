@@ -18,7 +18,7 @@ enum PdfConverter {
         }
     }
 
-    static func makePDF(from file: URL, in folder: URL) throws -> URL {
+    static func makePDF(from file: URL, to destination: URL) throws {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: file.path, isDirectory: &isDirectory) else {
             throw Failure.unreadable
@@ -27,32 +27,25 @@ enum PdfConverter {
             throw Failure.unsupported
         }
 
-        let destination = SaveLocation.uniqueDestination(
-            in: folder,
-            baseName: file.deletingPathExtension().lastPathComponent,
-            pathExtension: "pdf"
-        )
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-
         let type = UTType(filenameExtension: file.pathExtension) ?? .data
         if type.conforms(to: .pdf) || file.pathExtension.lowercased() == "pdf" {
             try FileManager.default.copyItem(at: file, to: destination)
-            return destination
+            return
         }
         if type.conforms(to: .image) {
             try writeImagePDF(from: file, to: destination)
-            return destination
+            return
         }
         if documentType(for: file) != nil {
             try writeTextPDF(from: file, to: destination)
-            return destination
+            return
         }
         if file.pathExtension.isEmpty {
             if (try? writeImagePDF(from: file, to: destination)) != nil {
-                return destination
+                return
             }
             try writeTextPDF(from: file, to: destination)
-            return destination
+            return
         }
         throw Failure.unsupported
     }

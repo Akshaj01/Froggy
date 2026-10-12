@@ -58,7 +58,8 @@ enum FroggySelfTest {
         do {
             let png = root.appendingPathComponent("lily.png")
             try writeSamplePNG(to: png)
-            let pdf = try PdfConverter.makePDF(from: png, in: output)
+            let pdf = pdfDestination(for: png, in: output)
+            try PdfConverter.makePDF(from: png, to: pdf)
             let document = PDFDocument(url: pdf)
             check("image becomes a one-page PDF", document?.pageCount == 1, pdf.lastPathComponent)
             check("image pdf header", headerIsPDF(pdf))
@@ -69,7 +70,8 @@ enum FroggySelfTest {
         do {
             let text = root.appendingPathComponent("field-notes.txt")
             try "Hello from Froggy\n".write(to: text, atomically: true, encoding: .utf8)
-            let pdf = try PdfConverter.makePDF(from: text, in: output)
+            let pdf = pdfDestination(for: text, in: output)
+            try PdfConverter.makePDF(from: text, to: pdf)
             let document = PDFDocument(url: pdf)
             check("text becomes a PDF", document?.string?.contains("Hello from Froggy") == true)
         } catch {
@@ -79,7 +81,8 @@ enum FroggySelfTest {
         do {
             let html = root.appendingPathComponent("page.html")
             try "<html><body><p>Hello frog</p></body></html>".write(to: html, atomically: true, encoding: .utf8)
-            let pdf = try PdfConverter.makePDF(from: html, in: output)
+            let pdf = pdfDestination(for: html, in: output)
+            try PdfConverter.makePDF(from: html, to: pdf)
             check("html becomes a PDF", PDFDocument(url: pdf)?.pageCount == 1)
         } catch {
             check("html becomes a PDF", false, error.localizedDescription)
@@ -88,7 +91,8 @@ enum FroggySelfTest {
         do {
             let rtf = root.appendingPathComponent("letter.rtf")
             try "{\\rtf1\\ansi Hello rtf}".write(to: rtf, atomically: true, encoding: .utf8)
-            let pdf = try PdfConverter.makePDF(from: rtf, in: output)
+            let pdf = pdfDestination(for: rtf, in: output)
+            try PdfConverter.makePDF(from: rtf, to: pdf)
             check("rtf becomes a PDF", PDFDocument(url: pdf)?.string?.contains("Hello rtf") == true)
         } catch {
             check("rtf becomes a PDF", false, error.localizedDescription)
@@ -99,7 +103,8 @@ enum FroggySelfTest {
             let document = PDFDocument()
             document.insert(PDFPage(), at: 0)
             document.write(to: source)
-            let copied = try PdfConverter.makePDF(from: source, in: output)
+            let copied = pdfDestination(for: source, in: output)
+            try PdfConverter.makePDF(from: source, to: copied)
             check("pdf is copied", copied.lastPathComponent == "already 2.pdf" && headerIsPDF(copied))
         } catch {
             check("pdf is copied", false, error.localizedDescription)
@@ -108,7 +113,7 @@ enum FroggySelfTest {
         do {
             let folder = root.appendingPathComponent("not-a-file", isDirectory: true)
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            _ = try PdfConverter.makePDF(from: folder, in: output)
+            try PdfConverter.makePDF(from: folder, to: output.appendingPathComponent("rejected.pdf"))
             check("folder is rejected", false)
         } catch {
             check("folder is rejected", error.localizedDescription == "Can't make a PDF of that.")
@@ -117,17 +122,17 @@ enum FroggySelfTest {
         do {
             let movie = root.appendingPathComponent("clip.mov")
             FileManager.default.createFile(atPath: movie.path, contents: Data("not a video".utf8))
-            _ = try PdfConverter.makePDF(from: movie, in: output)
+            try PdfConverter.makePDF(from: movie, to: output.appendingPathComponent("rejected.pdf"))
             check("video is rejected", false)
         } catch {
             check("video is rejected", error.localizedDescription == "Can't make a PDF of that.")
         }
 
-        check("drag wins over a double-click", StatusBarController.gesture(clickCount: 2, dragged: true) == .drag)
-        check("double-click screenshots", StatusBarController.gesture(clickCount: 2, dragged: false) == .screenshot)
-        check("single click opens the menu", StatusBarController.gesture(clickCount: 1, dragged: false) == .menu)
+        check("drag wins over a double-click", FrogController.gesture(clickCount: 2, dragged: true) == .drag)
+        check("double-click screenshots", FrogController.gesture(clickCount: 2, dragged: false) == .screenshot)
+        check("single click opens the menu", FrogController.gesture(clickCount: 1, dragged: false) == .menu)
 
-        let controller = StatusBarController()
+        let controller = FrogController()
         check("frog button is installed", controller.hasFrogButton)
         let titles = controller.makeMenu().items.map(\.title).filter { !$0.isEmpty }
         check(
@@ -166,6 +171,14 @@ enum FroggySelfTest {
 
         print(failed ? "SELF-TEST FAILED" : "SELF-TEST PASSED")
         return failed ? 1 : 0
+    }
+
+    private static func pdfDestination(for file: URL, in folder: URL) -> URL {
+        SaveLocation.uniqueDestination(
+            in: folder,
+            baseName: file.deletingPathExtension().lastPathComponent,
+            pathExtension: "pdf"
+        )
     }
 
     private static func headerIsPDF(_ url: URL) -> Bool {
